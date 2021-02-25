@@ -1,0 +1,118 @@
+import os
+os.getcwd()
+os.chdir('./.spyder-py3/others')
+
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import requests
+import re
+import time
+
+import pandas as pd
+import numpy as np
+
+import csv
+    
+# =============================================================================
+# 공공데이터 - 보건의료 - 파일데이터
+# =============================================================================
+chromedriver = ('./chromedriver.exe')
+driver = webdriver.Chrome(chromedriver)
+
+driver.get('https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE&keyword=&detailKeyword=&publicDataPk=&recmSe=N&detailText=&relatedKeyword=&commaNotInData=&commaAndData=&commaOrData=&must_not=&tabId=&dataSetCoreTf=&coreDataNm=&sort=&relRadio=&orgFullName=&orgFilter=&org=&orgSearch=&currentPage=1&perPage=40&brm=%EB%B3%B4%EA%B1%B4%EC%9D%98%EB%A3%8C&instt=&svcType=&kwrdArray=&extsn=&coreDataNmArray=')
+
+
+# 파일데이터
+title=[]; titles=[]; date=[]; dates=[]; describe=[]; describes=[];label=[]; labels=[]; tagset=[]; tagsets=[]
+for n in range(1, 49):
+    driver.get(f'https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE&keyword=&detailKeyword=&publicDataPk=&recmSe=N&detailText=&relatedKeyword=&commaNotInData=&commaAndData=&commaOrData=&must_not=&tabId=&dataSetCoreTf=&publicDataPks=&coreDataNm=&sort=&relRadio=&orgFullName=&orgFilter=&org=&orgSearch=&currentPage={n}&perPage=40&brm=%EB%B3%B4%EA%B1%B4%EC%9D%98%EB%A3%8C&instt=&svcType=&kwrdArray=&extsn=&coreDataNmArray=')
+    driver.implicitly_wait(5)
+    
+    title = driver.find_elements_by_css_selector(' dl > dt > a > span.title')
+    for i in title:
+        titles.append(i.text)
+    
+    date = driver.find_elements_by_css_selector('span.data')
+    for d in date:
+        if '-' in (d.text):
+            dates.append(d.text)
+            
+    describe = driver.find_elements_by_xpath('//dl/dd')
+    for desc in describe:
+        describes.append(desc.text)
+        
+    label = driver.find_elements_by_css_selector('p > span.labelset.red')    
+    for l in label:
+        labels.append(l.text)
+
+    tagset = driver.find_elements_by_css_selector('span.tagset')
+    for s in tagset:
+        tagsets.append(s.text)
+
+
+#파일
+form=[]    
+for i in range(len(describes)):
+    form.append('파일')
+    i+=1
+
+for c in be:
+    print(' '.join(c.text.split(' ')[1:]))
+    
+# API
+a_title=[]; a_titles=[]; a_date=[]; a_dates=[]; a_describe=[]; a_describes=[];a_label=[]; a_labels=[]; a_tagset=[]; a_tagsets=[]
+for a in range(1,8):
+    driver.get(f'https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=API&keyword=&detailKeyword=&publicDataPk=&recmSe=N&detailText=&relatedKeyword=&commaNotInData=&commaAndData=&commaOrData=&must_not=&tabId=&dataSetCoreTf=&coreDataNm=&sort=&relRadio=&orgFullName=&orgFilter=&org=&orgSearch=&currentPage={a}&perPage=40&brm=%EB%B3%B4%EA%B1%B4%EC%9D%98%EB%A3%8C&instt=&svcType=&kwrdArray=&extsn=&coreDataNmArray=')
+    driver.implicitly_wait(1)
+    
+    a_title = driver.find_elements_by_css_selector(' dl > dt > a > span.title')
+    for i in a_title:
+        a_titles.append(i.text)
+    
+    a_date = driver.find_elements_by_css_selector('span.data')
+    for d in a_date:
+        if '-' in (d.text):
+            a_dates.append(d.text)
+    
+    a_describe = driver.find_elements_by_xpath('//dl/dd')
+    for desc in a_describe:
+        a_describes.append(desc.text)
+        
+    
+    a_label = driver.find_elements_by_css_selector('p > span.labelset.red')    
+    for l in a_label:
+        a_labels.append(l.text)
+
+    a_tagset = driver.find_elements_by_css_selector('span.tagset')
+    for s in a_tagset:
+        a_tagsets.append(s.text)
+
+#API
+a_form=[]    
+for i in range(len(a_describes)):
+    form.append('API')
+    i+=1
+
+
+for desc in a_describe2:
+    print(desc.text)
+
+title2 = titles+a_titles
+new_titles=[]
+
+for i in title2:
+    new_titles.append(i.replace('_', ' '))
+
+
+new_dates = dates+a_dates
+new_desc = describes+a_describes
+new_labels = labels+a_labels
+new_tagsets = tagsets+a_tagsets
+new_form=form+a_form
+
+
+portal = {'제목':new_titles, '제공기관':new_labels,'설명':new_desc, '파일형태':new_tagsets,'제공형태':form,'수정일':new_dates,}
+
+df = pd.DataFrame(portal)
+# df['제공형태']=form
+df.to_csv('C:/Users/BIOJEAN/medical/new_portal2.csv')
