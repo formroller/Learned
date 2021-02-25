@@ -1,0 +1,112 @@
+# =============================================================================
+# 국가건강검진기관정보 코드조회
+# =============================================================================
+# https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15001692
+import os
+os.getcwd()
+os.chdir('C:/Users/BIOJEAN/Desktop/이용준/건강검진/파일')
+
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import urllib
+import urllib.request as myurl
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode, quote_plus, unquote
+import xml.etree.ElementTree as ET
+from collections import defaultdict
+## 인증키
+my_key=f'qNVnLrsetaz%2Fxgz4XeGJgpAsDFC1V918fFgBd7JsTpxtL%2FQhW0Ow1iffbmywToOWiowxzbVN91wENGMlcd3CdA%3D%3D'
+
+# 1. 시도주소 조회
+
+
+url_loc ='http://apis.data.go.kr/openapi/service/rest/CodeService/getSiDoList?serviceKey=qNVnLrsetaz%2Fxgz4XeGJgpAsDFC1V918fFgBd7JsTpxtL%2FQhW0Ow1iffbmywToOWiowxzbVN91wENGMlcd3CdA%3D%3D&stdt=20'
+
+data = urlopen(url_loc).read()
+soup = BeautifulSoup(data,'html.parser')
+items = soup.find_all('item')
+
+df = pd.DataFrame(columns = ['code','local'])
+
+i=0
+for item in items:
+    df.loc[i]=[item.text[:2],item.text[2:]]
+    i += 1
+
+# 2. 시군구 주소조회
+df2 = pd.DataFrame(columns = ['code','sub_code','sub_loc'])
+items=[]
+for i in df['code']:
+    sub_loc = f'http://openapi1.nhis.or.kr/openapi/service/rest/CodeService/getSiGunGuList?siDoCd={i}&ServiceKey='+my_key
+    
+    sub = urlopen(sub_loc).read()
+    soup2 = BeautifulSoup(sub,'html.parser')
+    item_bag = soup2.find_all('item')
+    items += item_bag
+    
+i=0
+for new_item in items:
+    df2.loc[i] = [new_item.text[:2], new_item.text[2:5], new_item.text[5:]]
+    i += 1
+
+merge_df = pd.merge(df,df2,on='code')
+merge_df.to_csv('./코드조회(지역).csv', encoding='cp949')
+
+# 3. 의료기관 조회
+m_kinds=[]
+for i in range(1,10):
+    url = f'http://openapi1.nhis.or.kr/openapi/service/rest/CodeService/getMedicInstList?detailCd={i}&ServiceKey={my_key}'
+    res = requests.get(url)
+    
+    response = ET.fromstring(res.text)
+    m_kinds += [[i.tag, i.text] for i in response.iter()]
+
+
+tag=[]
+value=[]
+for i in m_kinds:
+    tag.append(i[0])
+    value.append(i[1])
+
+res = {key:[] for key in tag}
+for key,val in zip(tag, value):
+    res[key].append(val)
+
+m_kind = pd.DataFrame.from_dict(res, orient='index').T
+m_kind.drop(m_kind.columns[0:7], axis = 1, inplace=True)
+m_kind.drop(m_kind.columns[2:], axis=1, inplace=True)
+m_kind.columns =[['기관코드','의료기관명']]
+
+m_kind.to_csv('./코드조회(기관).csv',encoding = 'cp949')
+# 4. 검진종류 조회
+diag = []
+for i in range(1,7):
+    url = f'http://openapi1.nhis.or.kr/openapi/service/rest/CodeService/getHchTypeList?detailCd={i}&ServiceKey={my_key}'
+    
+    res = requests.get(url)
+    
+    response = ET.fromstring(res.text)
+    diag += [[i.tag, i.text] for i in response.iter()]
+
+    tag=[]
+    value=[]
+    for i in diag:
+        tag.append(i[0])
+        value.append(i[1])
+    
+    res = {key:[] for key in tag}
+    for key,val in zip(tag, value):
+        res[key].append(val)
+
+diag_kind = pd.DataFrame.from_dict(res, orient='index').T
+diag_kind.drop(diag_kind.columns[0:7], axis=1, inplace = True)
+diag_kind.drop(diag_kind.columns[2:], axis=1, inplace = True)
+diag_kind.columns = [['검진코드','검진종류']]
+
+diag_kind.to_csv('./코드조회(검진종류).csv', encoding='cp949')
+
+# => 시도, 시군구 주소 조회 병합(merge_df)
+# => 의료기관조회(m_kind/기관조회.csv)
+# => 검진종류 조회(diag_kind/검진종류.csv)
