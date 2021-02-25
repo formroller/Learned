@@ -1,7 +1,7 @@
-# Learned
+# Learned (20.12 ~ 21.03 배운 점)
 crwaling, preprocessing/Classiifcation, Visualization
 
-> 20.12 ~ 21.03 배운 점
+
 
 1. Crwaling 
 ==============
