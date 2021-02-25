@@ -1,0 +1,224 @@
+# !pip install openyxl
+from tabula import read_pdf
+import tabula
+from openpyxl import Workbook
+import os
+import pandas as pd
+
+
+os.chdir('C:/Users/BIOJEAN/Desktop/이용준/자료입력/2020원본')
+path = './01_2020_한국인_영양소_섭취기준_-_에너지와_다량영양소.pdf'
+path2 = './split/01_2020_한국인_영양소_섭취기준_-_에너지와_다량영양소_p10.pdf'
+
+
+## 1) pdf sheet별로 쪼개서 변환 및 병합
+## 2) pdf 한 번에 읽어 변환 이후 쪼개서 엑셀에 병합
+
+# 불가
+# try:
+#     df = read_pdf(path)
+#     print(df)
+# except Exception as E:
+#     print(E)
+
+# 표 읽어오기 성공
+df = tabula.read_pdf(path2, pages='all')
+tabula.convert_into(path,output_path='./output.csv',output_format='csv', pages='all')
+
+#1) excel 시트에 저장
+import PyPDF2
+import tabula
+from tabula import read_pdf
+import pandas as pd 
+from xlwt import Workbook 
+import pandas as pd
+
+pdfFileObj = open(path, 'rb')
+pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+pages=pdfReader.numPages          #Total number of pages 
+pageObj = pdfReader.getPage()
+
+#LAB is my pdf file, 정상수
+x = tabula.read_pdf(path, pages='all', multiple_tables=True)
+df = pd.DataFrame()
+for i in x:    #x values in list []
+    print("printing all the table from the sheet", i)
+    df_table = pd.DataFrame(i)
+    df = df.append(df_table)
+    print(len(i))
+    df.to_excel('test12.xlsx', sheet_name=f'sheet_{len(i)}')
+    print('complete!!')
+
+df.to_excel('test123.xlsx'.format(i), header=True, index = True)
+
+x = tabula.read_pdf(path, pages='all', multiple_tables=True)
+df = pd.DataFrame()
+for i in x:    #x values in list []
+    print("printing all the table from the sheet", i)
+    df_table = pd.DataFrame(i)
+    df = df.append(df_table)
+    # df_table.to_excel(writer, sheet_name={i})
+
+df.to_excel('tables.xlsx'.format(i), header=True, index = True)
+df.to_excel(writer, sheet_name='first')
+writer.save()
+
+
+
+
+## 위 코드는 엑셀 파일 하나만 생성
+## 시트에 추가해보자
+
+x = tabula.read_pdf(path, pages='all', multiple_tables=True)
+df = pd.DataFrame()
+for i in x:    #x values in list []
+    print("printing all the table from the sheet", i)
+    df_table = pd.DataFrame(i)
+    df = df.append(df_table)
+    print(len(i))
+    df.to_excel('test12.xlsx', sheet_name=f'sheet_{len(i)}')
+    print('complete!!')
+
+df.to_excel('test123.xlsx'.format(i), header=True, index = True)
+
+# =============================================================================
+# 
+# =============================================================================
+doc=
+
+pdf = self.Document()
+
+pdf=self.dataDir +'input1.pdf'
+
+# Instantiate ExcelSave Option object
+
+excelsave=self.ExcelSaveOptions();
+
+# Save the output to XLS format
+
+doc.save(self.dataDir + "Converted_Excel.xls", excelsave);
+
+print "Document has been converted successfully"
+
+# =============================================================================
+# ## pdf 쪼개기
+# =============================================================================
+import glob
+import os
+from PyPDF2 import PdfFileReader, PdfFileWriter
+pdfs = PdfFileReader(open(path, 'rb'), strict = False)
+pdf_writer = PdfFileWriter()
+
+# 1페이지 추출
+pdf_writer.addPage(pdfs.getPage(0))
+pdf_writer.extractText().encode('utf-8')
+
+with open('./new_test.pdf', 'wb') as fn:
+    pdf_writer.write(fn)
+# =============================================================================
+# excel to pdf, 참고용 (pdf -> xlsx 변환 역순으로하면 되지 않을까?)
+# =============================================================================
+import win32com.client
+import time
+
+excel = win32com.client.Dispatch("Excel.Application")
+excel.Visible = True
+
+wb = excel.Workbooks.Open("C:\\Users\\사용자명\\desktop\\ex.xlsx")
+ws_data = wb.Worksheets("data")
+ws_chart = wb.Worksheets("chart")
+
+# chart 시트 선택
+ws_chart.Select()
+time.sleep(0.5)
+
+# 1~4 출력번호 반복문
+for n in range(1,5):
+
+    # 출력 번호 2행1열에 입력
+    ws_chart.Cells(2, 1).Value = n
+
+    # 2행2열 값을 name 변수에 저장
+    name = ws_chart.Cells(2, 2).Value
+
+    # pdf 저장경로, 파일명
+    pdf_path = "C:\\Users\\사용자명\\desktop\\{}{}.pdf".format(str(n), name)
+
+    # pdf 저장
+    wb.ActiveSheet.ExportAsFixedFormat(0, pdf_path)
+    time.sleep(1)
+
+wb.Close(False)
+excel.Quit()
+# http://hleecaster.com/python-excel-to-pdf/
+
+# =============================================================================
+# pdf 페이지별로 추출
+# =============================================================================
+
+
+## 아래 코드는 pdf 페이지별로 나누는 것.
+from PyPDF2 import PdfFileReader, PdfFileWriter
+split_pdf(path)
+def split_pdf(in_pdf, step=1):
+    """Splits a given pdf into seperate pdfs and saves 
+    those to a supfolder of the parent pdf's folder, called
+    splitted_pdf.
+    Arguments:
+        in_pdf: [str] Absolute path (and filename) of the
+                input pdf or just the filename, if the file
+                is in the current directory.
+        step:   [int] Desired number of pages in each of the
+                output pdfs.
+    Returns:
+        dunno yet
+    """
+    #TODO: Add choice for output dir
+    #TODO: Add logging instead of prints
+    #TODO: Refactor
+    try:    
+        with open(in_pdf, 'rb') as in_file:
+            input_pdf = PdfFileReader(in_file)
+            num_pages = input_pdf.numPages
+            input_dir, filename = os.path.split(in_pdf)
+            filename = os.path.splitext(filename)[0]
+            output_dir = input_dir + "/" + filename + "_splitted/"
+            os.mkdir(output_dir)
+            intervals = range(0, num_pages, step)
+            intervals = dict(enumerate(intervals, 1))
+            naming = f'{filename}_p'
+            count = 0
+            for key, val in intervals.items():
+                output_pdf = PdfFileWriter()
+                if key == len(intervals):
+                    for i in range(val, num_pages):
+                        output_pdf.addPage(input_pdf.getPage(i))
+                    nums = f'{val + 1}' if step == 1 else f'{val + 1}-{val + step}'
+                    with open(f'{output_dir}{naming}{nums}.pdf', 'wb') as outfile:
+                        output_pdf.write(outfile)
+                    print(f'{naming}{nums}.pdf written to {output_dir}')
+                    count += 1
+                else:
+                    for i in range(val, intervals[key + 1]):
+                        output_pdf.addPage(input_pdf.getPage(i))
+                    nums = f'{val + 1}' if step == 1 else f'{val + 1}-{val + step}'
+                    with open(f'{output_dir}{naming}{nums}.pdf', 'wb') as outfile:
+                        output_pdf.write(outfile)
+                    print(f'{naming}{nums}.pdf written to {output_dir}')
+                    count += 1
+    except FileNotFoundError as err:
+        print('Cannot find the specified file. Check your input:')
+    print(f'{count} pdf files written to {output_dir}')
+
+writer = pd.ExcelWriter('sheet123.xlsx', engine='xlsxwriter')
+
+df.to_excel(writer, sheet_name='first')
+df.to_excel(writer, sheet_name='second')
+writer.save()
+ws1 = wb.active
+
+
+
+# 참고
+# =============================================================================
+1, https://gomc.co.kr/pdf-%ED%8C%8C%EC%9D%BC-python%EC%9C%BC%EB%A1%9C-%EC%9D%BD%EA%B8%B0/
