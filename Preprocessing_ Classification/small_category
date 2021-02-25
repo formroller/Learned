@@ -31,7 +31,7 @@ for i in range(len(a)):
             
 cate2 = [''.join(i) for i in b]
 
-x = Counter(cate2)
+x = Counter(cate2) 
 x.most_common()
 
 ## cate2 Series 생성
