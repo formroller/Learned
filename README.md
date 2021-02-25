@@ -7,7 +7,7 @@ crwaling, preprocessing/Classiifcation, Visualization
 ===========================
  * 공공데이터 포털, 통계청 자료 수집
   + selenium, 자동 정보 수집
-   + pip, Selenium, Webdriver, xmlpath, selector, API
+   ## pip, Selenium, Webdriver, xmlpath, selector, API
     - explain
       가용한 파일을 확인하기 위해 공공데이터 포털의 리스트(파일명, 제공형태, 설명 등)를 긁어와야했다. BeautifulSoup을 활용해 데이터 크롤링 결과 원하던 데이터를 얻을 수 없었고,
      그 결과 찾은게 selenium이였다. Selenium은 요소에 대해 click, enter 등의 행위를 수행한다는 점이 BeautifulSoup와 차이점이였으며 그결과 데이터 파일 목록을 무사히 수집할 수 있었다.
@@ -17,7 +17,8 @@ crwaling, preprocessing/Classiifcation, Visualization
      (21.02.25 기준 web ui변경되었다.)
      * 특정 분야에 대한 '공공데이터 파일 목록' 리스트와 '통계청 목록' 리스트 생성.
      
-2. Preprocessing / Classification
+#2. Preprocessing / Classification
+======================================
  * 수집한 데이터 전처리
   + re, 패턴 찾기
    # re, KoNLP
@@ -31,7 +32,8 @@ crwaling, preprocessing/Classiifcation, Visualization
     * 요약 컬럼대신 태그 컬럼을 처음 만들었으며, 이를 분류중 KoNLP 패키지를 사용해 명사들을 분리했으나 키워드 또는 피벗시 간단하게 알 수 있는 컬럼이 좋겠다는 의견을 반영해
       단어 부서 또는 지역 분류후 뒷 부분을 요약 컬럼으로 생성했다.
 
-(번외) PDF to Excel
+#(번외) PDF to Excel
+======================
  * PDF파일 엑셀로 변환
   + pdftables, PyPDF2, pdfminer
    # pdftables API
@@ -42,7 +44,8 @@ crwaling, preprocessing/Classiifcation, Visualization
    
   
   
-3. Visualization
+#3. Visualization
+===================
   * 국민건강보험공단 진료내역정보.csv
     + colab, jupyter notebook
      # Colab, Foilum, seaborn, matplotlib, groupby, agg
