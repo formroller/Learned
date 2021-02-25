@@ -1,0 +1,345 @@
+import pandas as pd
+import numpy as np
+
+from collections import Counter
+import re
+from konlpy.tag import Okt
+
+import csv
+
+df=pd.read_csv('pt_1228_1.csv', encoding='cp949')
+cate = df['info'].copy()
+rows = np.arange(len(cate))
+
+## cate 항목 생성(category 생성위해)
+a = cate
+b=[]
+for i in range(len(a)):
+    if len(a[i].split(' ')) < 2:
+        b.append(a[i])
+    else:
+        if a[i].split(' ')[0].endswith('구'):
+            b.append(a[i].split(' ')[1:])
+        elif a[i].split(' ')[0].endswith('군'):
+            b.append(a[i].split(' ')[1:])
+        elif a[i].split(' ')[0].endswith('시'):
+            b.append(a[i].split(' ')[1:])
+        elif a[i].split(' ')[0].endswith('도'):
+            b.append(a[i].split(' ')[1:])    
+        else:
+            b.append(a[i])
+            
+cate2 = [''.join(i) for i in b]
+
+x = Counter(cate2)
+x.most_common()
+
+## cate2 Series 생성
+cate2 = pd.Series(cate2, rows)
+cate2.value_counts()
+
+# 항목 통합
+#기관_
+# cate2[cate2.str.contains('국립암센터')] = '기관_국립암센터'
+# cate2[cate2.str.contains('심사평가원')] = '기관_건강보험심사평가원'
+# cate2[cate2.str.contains('국립춘천')] = '기관_국립춘천병원'
+# cate2[cate2.str.contains('나주')] = '기관_국립나주병원'
+# cate2[cate2.str.contains('국가암검진')] = '기관_국가암검진의료기관'
+# cate2[cate2.str.contains('국립목포')] = '기관_국립목포병원'
+# cate2[cate2.str.contains('질병관리')] = '기관_질병관리청'
+# cate2[cate2.str.contains('국립부곡')] = '기관_국립부곡병원'
+# cate2[cate2.str.contains('근로복지공단')] = '기관_근로복지공단'
+# cate2[cate2.str.contains('광주보건')] = '기관_광주보건환경연구원'
+# cate2[cate2.str.contains('마산')] = '기관_국립마산병원'
+# cate2[cate2.str.contains('행정안전')] = '기관_행정안전부'
+# cate2[cate2.str.contains('보험공단')] = '기관_국민건강보험공단'
+# cate2[cate2.str.contains('공주')] = '기관_국립공주병원'
+# cate2[cate2.str.contains('대한적십자사')]='기관_대한적십자사'
+# cate2[cate2.str.contains('건강증진개발원')]  = '기관_한국건강증진개발원'
+# cate2[cate2.str.contains('국민건강보험공단')]  = '기관_국립건강보험공단'
+
+
+# =============================================================================
+# ##보건의료
+# =============================================================================
+# 보건의료(병원/의원)
+cate2[cate2.str.contains('국립')&~cate2.str.contains('암센터')] = '국립병원'
+cate2[cate2.str.contains('종합병원')] = '종합병원'
+cate2[cate2.str.contains('일반병원')|cate2.str.contains('안전부 병원')] = '일반병원'
+cate2[cate2.str.contains('치과병원') & ~cate2.str.contains('기공')] = '치과병원'
+cate2[cate2.str.contains('한방병원')] = '한방병원'
+cate2[cate2.str.contains('일반의원')|cate2.str.contains('안전부 의원')] = '일반의원'
+cate2[cate2.str.contains('치과의원')] = '치과의원'
+cate2[cate2.str.contains('한의원') & ~cate2.str.contains('제외')] = '한의원'
+
+# 의료자원
+# 1.보건의료인력 + 사회복지사
+cate2[cate2.str.contains('면허')|cate2.str.contains('의사')&~cate2.str.contains('수의사')&~cate.str.contains('성적')] = '보건의료인력'
+cate2[cate2.str.contains('간호사')&~cate2.str.contains('성적')]= '보건의료인력'
+cate2[cate2.str.contains('약사')] = '보건의료인력'
+cate2[cate2.str.contains('부정')] = '행정처분'
+# 2 시설
+cate2[cate2.str.contains('보건소') |cate2.str.contains('보건진료소')| cate2.str.contains('보건지소')& ~cate2.str.contains('예방')]='보건소'
+cate2[cate2.str.contains('병상')|cate2.str.contains('및 의원')|cate2.str.contains('병원,의원')] = '보건의료시설'
+cate2[cate2.str.contains('응급의료기관')|cate2.str.contains('전문병원')|cate2.str.contains('전문질환센터')] ='보건의료시설'
+cate2[cate2.str.contains('조산원')|cate2.str.contains('산후조리')] = '보건의료시설'
+cate2[cate2.str.contains('공공의료')&~cate2.str.contains('공공의료사업')] = '보건의료시설'
+cate2[cate2.str.contains('의료기관')|cate2.str.contains('병의원')&~cate2.str.contains('의료관광')|cate2.str.contains('공휴일')|cate2.str.contains('명절')] = '의료기관'
+# 3 장비
+cate2[cate2.str.contains('특수의료')] = '특수의료장비'
+cate2[cate2.str.contains('의료장비')&~cate2.str.contains('특수의료')] = '의료장비'
+cate2[cate2.str.contains('장비')&~cate2.str.contains('특수의료')&~cate2.str.contains('의료장비')] = '의료장비'
+
+# 의료기관
+cate2[cate2.str.contains('손해배상')] = '분쟁조정'
+cate2[cate2.str.contains('조정분석')|cate2.str.contains('보상')|cate2.str.contains('감정분석')|cate2.str.contains('상담분석')] = '분쟁조정'
+
+# 의약
+cate2[cate2.str.contains('약국')|cate2.str.contains('약업소')] = '약국정보'
+cate2[cate2.str.contains('의약품 도매상')|cate2.str.contains('의약품도매')]='의약품도매업'
+cate2[cate2.str.contains('판매업소')|cate2.str.contains('상비')&~cate2.str.contains('의료기판매')|cate2.str.contains('기타의약업소')] = '의약품소매업'
+cate2[cate2.str.contains('의약품')&cate2.str.contains('정보')|cate2.str.contains('의약품안전')&~cate2.str.contains('동물')] = '의약품 정보'
+cate2[cate2.str.contains('의약품')&cate2.str.contains('현황')] = '의약품 현황'
+
+
+
+# =============================================================================
+# ## 공공보건
+# =============================================================================
+# 질병
+cate2[cate2.str.contains('암')&~cate2.str.contains('병원평가정보')] = '암정보'
+cate2[cate2.str.contains('호스피스')] = '호스피스' # 암
+cate2[cate2.str.contains('설사')|cate2.str.contains('식중독')|cate2.str.contains('결핵')|cate2.str.contains('고혈압')|cate2.str.contains('당뇨')|cate2.str.contains('엔테로바이러스')] = '질병'
+cate2[cate2.str.contains('질병')|cate2.str.contains('상병')|cate2.str.contains('일본')|cate2.str.contains('이상지질')&~cate2.str.contains('질병관리본부')] = '질병'
+cate2[cate2.str.contains('만성질환')]='만성질환'
+cate2[cate2.str.contains('질환')&~cate2.str.contains('만성질환')] = '기타질황'
+cate2[cate2.str.contains('호흡기')&~cate2.str.contains('공기호흡')]='호흡기바이러스'
+cate2[cate2.str.contains('희귀')&~cate2.str.contains('희귀질환자')]='질병'
+cate2[cate2.str.contains('감염병')|cate2.str.contains('H')] = '감염병'
+cate2[cate2.str.contains('코로나')] = '감염병_코로나'
+# 공공의료
+cate2[cate2.str.contains('지방의료원')] = '지방의료원'
+# 응급의료
+cate2[cate2.str.contains('응급')&~cate2.str.contains('콩고')&~cate2.str.contains('탕갈레')&~cate2.str.contains('아비사웰라')]='응급의료'
+cate2[cate2.str.contains('구급차')]='구급차'
+cate2[cate2.str.contains('심장')|cate2.str.contains('제세동기')]='응급의료'
+# 생명윤리
+cate2[cate2.str.contains('헌혈')|cate2.str.contains('혈액안전관리')|cate2.str.contains('조혈모')|cate2.str.contains('장기기증')|cate2.str.contains('장기이식')]='헌혈/기증'
+cate2[cate2.str.contains('대한적십자사')] = '헌혈/기증'
+cate2[cate2.str.contains('인체')] = '인체자원'
+# =============================================================================
+# ## 한의약
+# =============================================================================
+cate2[cate2.str.contains('한의')|cate2.str.contains('한방')|cate2.str.contains('한약')|cate2.str.contains('약방등록')] = '한의/한방'
+
+# =============================================================================
+# ## 건강보험
+# =============================================================================
+# 보험정책
+cate2[cate2.str.contains('가입자')|cate2.str.contains('의료급여')|cate2.str.contains('직장')] = '보험정책'
+# 보험급여
+cate2[cate2.str.contains('급여')&~cate2.str.contains('연금')] = '보험급여'
+# 보험약제
+cate2[cate2.str.contains('약제')] = '보험약제'
+# =============================================================================
+# ## 건강
+# =============================================================================
+# 건강정책
+cate2[cate2.str.contains('보건의')&cate2.str.contains('공중보건의') &~cate2.str.contains('기타_')] = '공중보건의'
+cate2[cate2.str.contains('국민건강증진')|cate2.str.contains('보건교육')|cate2.str.contains('건강생활실천사업')] = '국민건강증진'
+cate2[cate2.str.contains('보건소') |cate2.str.contains('보건진료소')| cate2.str.contains('보건지소')|cate2.str.contains('보건기관')& ~cate2.str.contains('예방')]='보건소'
+cate2[cate2.str.contains('학교')]  = '건강_학교'
+cate2[cate2.str.contains('예방접종')] ='건강_예방접종'
+cate2[cate2.str.contains('건강조사')]  = '건강_조사지표'
+cate2[cate2.str.contains('건강실태')] = '건강실태'
+
+
+# 건강증진
+cate2[cate2.str.contains('건강증진') & ~cate2.str.contains('정신')&~cate2.str.contains('국민건강증진')|cate2.str.contains('실외운동기구')
+      |cate2.str.contains('보건관련상식')|cate2.str.contains('방문보건')|cate2.str.contains('건강')] = '건강증진'
+cate2[cate2.str.contains('흡연')|cate2.str.contains('금연')|cate2.str.contains('담배')] = '흡연/금연'
+cate2[cate2.str.contains('검진')] = '건강검진'
+
+# 정신건강
+cate2[cate2.str.contains('정신')|cate2.str.contains('자살')& ~cate2.str.contains('절주')&~cate2.str.contains('병원평가')] = '정신건강'
+cate2[cate2.str.contains('절주')|cate2.str.contains('음주')] = '알코올'
+cate2[cate2.str.contains('중독')] = '중독'
+
+# =============================================================================
+# ## 보건산업
+# =============================================================================
+# 보건산업
+cate2[cate2.str.contains('의료기기')|cate2.str.contains('의료기') & ~cate2.str.contains('에티오피아')] = '의료기기업' # 수리/판매/설치  # 보건산업
+cate2[cate2.str.contains('안경')] = '안경소매업'
+cate2[cate2.str.contains('안마')| cate2.str.contains('유사')] = '의료유사업' # 안마
+cate2[cate2.str.contains('모바일')| cate2.str.contains('보건산업')|cate2.str.contains('ODA')] = '보건산업'
+cate2[cate2.str.contains('보건복지분야')|cate2.str.contains('의료관광')|cate2.str.contains('연구개발')|cate2.str.contains('건강기능')] = '보건산업'
+cate2[cate2.str.contains('외국')]  = '외국인지원'
+cate2[cate2.str.contains('기공소')] = '치과기공소'
+cate2[cate2.str.contains('콜롬비아')|cate2.str.contains('콩고')|cate2.str.contains('개황')|cate2.str.contains('해외진출')
+      |cate2.str.contains('탕갈레')|cate2.str.contains('아비사웰라')|cate2.str.contains('에티오피')] = '해외산업'
+
+# 보건의료기술
+cate2[cate2.str.contains('특수의료')|cate2.str.contains('특수장비')|cate2.str.contains('방사선')] = '특수의료장비'
+cate2[cate2.str.contains('장비')&~cate2.str.contains('특수')] = '의료장비'
+
+# =============================================================================
+# ## 복지
+# =============================================================================
+# 기초생활
+cate2[cate2.str.contains('기초생활')|cate2.str.contains('수급')] = '기초생활'
+# 기초의료
+cate2[cate2.str.contains('취약')] = '취약계층지원'
+cate2[cate2.str.contains('공공의료사업')] = '기초의료'
+cate2[cate2.str.contains('부담')|cate2.str.contains('진료비 지원')|cate2.str.contains('새생명')|cate2.str.contains('보장구')] = '기초의료'
+cate2[cate2.str.contains('공공의료')&~cate2.str.contains('공공의료사업')|cate2.str.contains('희귀질환자')] = '기초의료'
+# 지역복지
+cate2[cate2.str.contains('지역')&~cate2.str.contains('회관')&~cate2.str.contains('오염')] = '지역복지'
+
+
+# =============================================================================
+# ## 사회서비스
+# =============================================================================
+cate2[cate2.str.contains('산모신생아')|cate2.str.contains('간병')|cate2.str.contains('발달')|cate2.str.contains('산후도우미')] = '사회서비스'
+cate2[cate2.str.contains('모자')|cate2.str.contains('임신')|cate2.str.contains('출산')|cate2.str.contains('모유수유')&~cate2.str.contains('출산_')] = '출산'
+cate2[cate2.str.contains('난임술')|cate2.str.contains('난임')] = '난임술의료기관'
+
+# =============================================================================
+# ## 장애인
+# =============================================================================
+cate2[cate2.str.contains('장애인')|cate2.str.contains('보장구')]='장애인서비스'
+
+# =============================================================================
+# # 아동인구
+# =============================================================================
+cate2[cate2.str.contains('어린이')] = '아동관리'
+cate2[cate2.str.contains('육아')|cate2.str.contains('영유아')] = '아동보육'
+
+# =============================================================================
+# # 노인
+# =============================================================================
+# 노인정책
+cate2[cate2.str.contains('치매')|cate2.str.contains('노인코호트')|cate2.str.contains('경로당')|cate2.str.contains('회관')] = '노인정책'
+cate2[cate2.str.contains('요양')&~cate2.str.contains('보호사')&~cate2.str.contains('기간별')&~cate2.str.contains('병원평가')&~cate2.str.contains('보험')] = '요양기관'
+# 노인지원
+cate2[cate2.str.contains('장사')|cate2.str.contains('장례')|cate2.str.contains('화장')&~cate2.str.contains('화장실')|cate2.str.contains('추모')|cate2.str.contains('묘지')] = '장사제도'
+# 노인요양보험
+cate2[cate2.str.contains('장기요양')] = '노인요양보험'
+
+cate2[cate2.str.contains('간호')]
+
+# 기타자료
+cate2[cate2.str.contains('시험')|cate2.str.contains('응시')|cate2.str.contains('성적')] = '기타_시험'
+cate2[cate2.str.contains('음식')|cate2.str.contains('맛집')] ='기타_음식점'
+cate2[cate2.str.contains('병원평가')] = '기타_병원평가'
+cate2[cate2.str.contains('세탁')|cate2.str.contains('미용')|cate2.str.contains('이용업')] = '기타_세탁/이미용'
+cate2[cate2.str.contains('위생')|cate2.str.contains('소독')] = '기타_소독/위생'
+cate2[cate2.str.contains('동물')|cate2.str.contains('수의사')] = '기타_동물'
+cate2[cate2.str.contains('고령')] = '기타_고령친화우수제품'
+cate2[cate2.str.contains('영상')] = '기타_의료영상'
+cate2[cate2.str.contains('급식')] = '기타_급식소현황'
+cate2[cate2.str.contains('발급')] = ' 기본_진료기록발급절차'
+cate2[cate2.str.contains('수수료')] = '기타_검사수수료'
+cate2[cate2.str.contains('근로복지지원')] = '기타_근로복지지원'
+cate2[cate2.str.contains('법인')] = '기타_법인정보'
+cate2[cate2.str.contains('사회복지')] ='기타_사회복지정보'
+cate2[cate2.str.contains('홈페이지')] ='기타_홈페이지'
+cate2[cate2.str.contains('사업장')]='기타_사업장관리'
+cate2[cate2.str.contains('보고서')]='기타_보고서'
+cate2[cate2.str.contains('행위')]='기타_진료행위'
+cate2[cate2.str.contains('통계')]='기타_보건의료통계' ##다시보기
+cate2[cate2.str.contains('자원봉사')] ='기타_자원봉사현황'
+cate2[cate2.str.contains('산재')] = '기타_산업재해'
+cate2[cate2.str.contains('숙박')]='기타_숙박업소'
+cate2[cate2.str.contains('민방위')]='기타_민방위'
+cate2[cate2.str.contains('유흥')]='기타_유흥주점'
+# cate2[cate2.str.contains('정보')&~cate.str.contains('암')&~cate2.str.contains('약국')&~cate2.str.contains('기타')&~cate2.str.contains('우편')]
+# cate2[cate2.str.contains('정보')&~cate2.str.contains('암')&~cate2.str.contains('기타')]
+
+# 논외
+cate2[cate2.str.contains('원숭이')|cate2.str.contains('우편')|cate2.str.contains('발급')|cate2.str.contains('바코드')|cate2.str.contains('코드테이블')
+      |cate2.str.contains('간호조무사')|cate2.str.contains('자료실')|cate2.str.contains('온라인')|cate2.str.contains('보건의료정보용어표준')
+      |cate2.str.contains('돼지열병')] = '기타'
+# # =============================================================================
+# # 기타
+# cate2[cate2.str.contains('국가 개황') | cate2.str.contains('콩고')| cate2.str.contains('탕갈레')
+#       |cate2.str.contains('아비사웰라') | cate2.str.contains('예방 수칙')|cate2.str.contains('영어')
+#       |cate2.str.contains('중국어 간체')|cate2.str.contains('건강 지킴이')|cate2.str.contains('해외긴급')|cate2.str.contains('콜롬비아')|
+#       cate2.str.contains('모잠비크')|cate2.str.contains('에티오피아')] = '기타_해외'
+
+
+# # =============================================================================
+# # 기타_
+# cate2[cate2.str.contains('보건의료인국가시험')| cate2.str.contains('성적')|cate2.str.contains('자격증')|cate2.str.contains('세부시험')|cate2.str.contains('시험정보')] = '기타_시험'
+# cate2[cate2.str.contains('응시')]='기타_응시'
+# cate2[cate2.str.contains('미용')] = '기타_미용'
+# cate2[cate2.str.contains('이용')] = '기타_이용'
+# cate2[cate2.str.contains('목욕')] = '기타_목욕'
+# cate2[cate2.str.contains('숙박')] = '기타_숙박'
+# cate2[cate2.str.contains('세탁')]='기타_세탁'
+# cate2[cate2.str.contains('세척')]='기타_세척'
+# cate2[cate2.str.contains('네일아트')] = '기타_네일아트'
+# cate2[cate2.str.contains('암환자의료비')] = '기타_암환자의료비'
+# cate2[cate2.str.contains('법인')] = '기타_법인'
+# cate2[cate2.str.contains('보건의료빅데이터')] = '기타_보건의료빅데이터개방시스템'
+# cate2[cate2.str.contains('병원평가')] = '기타_병원평가정보'
+# cate2[cate2.str.contains('홈페이지')] = '기타_홈페이지'
+# cate2[cate2.str.contains('영상')] = '기타_의료영상'
+# cate2[cate2.str.contains('고령')] = '기타_고령친화제품'
+# cate2[cate2.str.contains('가상 모델')] = '기타_가상모델'
+# cate2[cate2.str.contains('장례')| cate2.str.contains('장사')|cate2.str.contains('묘지')|cate2.str.contains('화장')|cate2.str.contains('추모공원')] = '기타_장례'
+# cate2[cate2.str.contains('동물')|cate2.str.contains('수의사')] = '기타_동물'
+# cate2[cate2.str.contains('운전교육')] = '기타_운전교육'
+# cate2[cate2.str.contains('음식')|cate2.str.contains('맛집')]='기타_음식점'
+# cate2[cate2.str.contains('소독')|cate2.str.contains('위생')| cate2.str.contains('소 독 ')] = '기타_위생'
+# cate2[cate2.str.contains('집단급식소')|cate2.str.contains('급식소')] = '기타_급식소설치병원'
+# cate2[cate2.str.contains('우편')] = '기타_우편번호'
+# cate2[cate2.str.contains('수수료')]  = '기타_수수료정보'
+# cate2[cate2.str.contains('진료정보')]  = '기타_진료정보'
+# cate2[cate2.str.contains('발급')] = '기타_발급정보'
+# cate2[cate2.str.contains('정보')&cate2.str.contains('환자')] = '기타_환자정보'
+# cate2[cate2.str.contains('정보') & ~cate2.str.contains('암') & ~cate2.str.contains('기타_')]='기타_종합정보'
+# cate2[cate2.str.contains('자원봉사')] = '기타_자원봉사자현황'
+# cate2[cate2.str.contains('외국')]  = '기타_외국인 지원'
+# cate2[cate2.str.contains('감시실적')]  = '기타_감시실적'
+# cate2[cate2.str.contains('인큐베이팅')] = '기타_인큐베이팅기업 생산품'
+# cate2[cate2.str.contains('1인당')]  = '기타_1인당 사회복지 예산액'
+# cate2[cate2.str.contains('아토피천식')] ='기타_아토피천식 안심학교'
+# cate2[cate2.str.contains('방문')]  = '기타_방문보건'
+# cate2[cate2.str.contains('의료행위')] = '기타_의료행위기록'
+# cate2[cate2.str.contains('의사수')] = '기타_6570 생존 의사수'
+# cate2[cate2.str.contains('마을회관')|cate2.str.contains('경로당')] ='기타_노인시설'
+# cate2[cate2.str.contains('보건복지')] = '기타_보건복지'
+# cate2[cate2.str.contains('소속병원')]='기타_소속병원'
+# cate2[cate2.str.contains('무더위')]='기타_무더위쉼터'
+# cate2[cate2.str.contains('무인대여소')] = '기타_무인대여소'
+# cate2[cate2.str.contains('입원')] = '기타_입원환자'
+# cate2[cate2.str.contains('내원')] = '기타_내원환자'
+# cate2[cate2.str.contains('외래')] = '기타_외래환자'
+
+
+# cate2[cate2.str.contains('코드테이블')|cate2.str.contains('자살')|cate2.str.contains('논문')|cate2.str.contains('DB')|cate2.str.contains('근로복지지원현황')
+#       |cate2.str.contains('관련 기초자료')|cate2.str.contains('품질문서')|cate2.str.contains('정도보증')|cate2.str.contains('자율점검')] = '기타'
+# 의료기관
+# cate2[cate2.str.contains('당직')|cate2.str.contains('의료기관정보')|cate2.str.contains('보건기관')|cate2.str.contains('관내의료기관')
+#      |cate2.str.contains('부속의료')|cate2.str.contains('의료시설')|cate2.str.contains('공공의료기관')
+#       |cate2.str.contains('nt병원정보')|cate2.str.contains('평일야간및휴일')|cate.str.contains('의료기관  API')|
+#      cate2.str.contains('휴일진료 의료')|cate2.str.contains('명절 비상 진료')| cate2.str.contains('보건의료기관조회')|
+#      cate2.str.contains('이상의료기관')|cate2.str.contains('의료기관 정보')|cate2.str.contains('지역보건의료기관')|
+#      cate2.str.contains('휴일의료기관')|cate2.str.contains('의료기관현황')&cate2.str.contains('난임술의료기관')|cate2.str.contains('공휴일진료병원')
+#      |cate2.str.contains('연휴의료기관')|cate2.str.contains('필수위탁 의료기관')|cate2.str.contains('의료기관 현황')] = '의료기관'
+
+# 질병
+# cate2[~cate2.str.contains('기관_질병')&cate2.str.contains('질병')|cate2.str.contains('질환')|cate2.str.contains('고혈압')|cate2.str.contains('당뇨')|cate2.str.contains('식중독')] = '질병/질환'
+# cate2[cate2.str.contains('암')|cate2.str.contains('협력병기')|cate2.str.contains('레지스트리')& ~cate2.str.contains('병원평가') & ~cate2.str.contains('위암정보')&~cate2.str.contains('기관')&~cate2.str.contains('기타')]='암정보'
+# cate2[cate2.str.contains('위암')] = '위암정보'
+# cate2[cate2.str.contains('호스피스')] = '호스피스'
+# cate2[cate2.str.contains('감염')&~cate2.str.contains('코로나')|cate2.str.contains('결핵')|cate2.str.contains('호흡기')] = '감염병'
+# cate2[cate2.str.contains('예방접종')] = '예방접종'
+# cate2[cate2.str.contains('코로나')] = '코로나19'
+# cate2[cate2.str.contains('예측')] = '예측조사'
+# cate2[cate2.str.contains('상병')&~cate2.str.contains('진료실')] = '상병별 통계'
+Counter(cate2)
+
+df['small_cate'] = cate2
+df.to_csv('1230_2.csv', encoding='cp949')
