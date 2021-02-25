@@ -1,0 +1,140 @@
+# =============================================================================
+# 검진기관 찾기(API)
+# =============================================================================
+# (국가건강검진기관정보) 국가건강검진기관을 검색 할 수 있는 서비스
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import urllib
+import urllib.request as myurl
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode, quote_plus, unquote
+import xml.etree.ElementTree as ET
+
+
+# (참조용) refer['code'] 지역코드
+refer = pd.read_csv('C:/Users/BIOJEAN/Desktop/이용준/건강검진/파일/건강검진기관정보(시군구).csv', encoding='cp949')
+my_key = ''
+
+# 1. 지역별 검진기관 안내 (getRegnHmcList) loc_dept
+c=[]
+for i in sorted(set(refer['code'])):
+    for j in (refer[(refer['code']==i)]['sub_code']):# 110,140,170,200,215,230,260,290,305,320
+        url = f'http://openapi1.nhis.or.kr/openapi/service/rest/HmcSearchService/getRegnHmcList?&siDoCd={i}&siGunGuCd={j}&ServiceKey={my_key}'
+        re = requests.get(url)
+          
+        root = ET.fromstring(re.text)
+        c+=[tuple([r.tag , r.text]) for r in root.iter()]
+
+# tag, value 분리
+tag=[]
+value=[]
+for i in c:
+    tag.append(i[0])
+    value.append(i[1])
+
+res = {key:[] for key in tag}  # creating a mesh of keys with empty values list 
+for key,val in zip(tag, value):  # loop to iterate through keys and values 
+    res[key].append(val)
+
+# To DataFrame    
+loc_dept= pd.DataFrame.from_dict(res, orient = 'index').T
+loc_dept.drop(loc_dept.columns[:7], axis=1, inplace = True)
+loc_dept.drop(loc_dept.columns[-3:], axis=1, inplace = True)
+loc_dept.columns=[['유방암검진담당','대장암검진코드','자궁경부암검진코드','X좌표값','Y좌표값','검진실팩스번호','검진실전화번호','일반검진담당','검진기관명','기관코드','기관전화번호','영유아검진코드','소재지주소','소재지우편번호','간암검진코드','구강검진코드','시도코드','시군구코드','위암검진코드','검진기관종별명']]
+
+
+# 2. 검진종류별 검진기관 안내 (getHchkTypesHmcList) / diag_dept
+d=[]
+for i in sorted(set(refer['code'])):
+    for j in (refer[(refer['code']==i)]['sub_code']):# 110,140,170,200,215,230,260,290,305,320
+        url = f'http://openapi1.nhis.or.kr/openapi/service/rest/HmcSearchService/getHchkTypesHmcList?&siDoCd={i}&siGunGuCd={j}&ServiceKey={my_key}'
+        re = requests.get(url)
+          
+        root = ET.fromstring(re.text)
+        d+=[tuple([r.tag , r.text]) for r in root.iter()]
+
+# tag, value 분리
+d_tag=[]
+d_value=[]
+for i in d:
+    d_tag.append(i[0])
+    d_value.append(i[1])
+
+d_res = {key:[] for key in d_tag}  # creating a mesh of keys with empty values list 
+for key,val in zip(d_tag, d_value):  # loop to iterate through keys and values 
+    d_res[key].append(val)
+
+diag_dept = pd.DataFrame.from_dict(d_res, orient='index').T
+diag_dept.drop(diag_dept.columns[:7], axis=1, inplace = True)
+diag_dept.drop(diag_dept.columns[-3:], axis=1, inplace = True)
+diag_dept.columns=[['유방암검진담당','대장암검진코드','자궁경부암검진코드','X좌표값','Y좌표값','검진실팩스번호','검진실전화번호','일반검진담당','검진기관명','기관코드','기관전화번호','영유아검진코드','소재지주소','소재지우편번호','간암검진코드','구강검진코드','시도코드','시군구코드','위암검진코드','검진기관종별명']]
+
+# 3. 공휴일 검진기관 안내 (getHolidaysHmcList) ho_dept
+e=[]
+for i in sorted(set(refer['code'])):
+    for j in (refer[(refer['code']==i)]['sub_code']):# 110,140,170,200,215,230,260,290,305,320
+        # url = f'http://apis.data.go.kr/openapi/service/rest/HmcSearchService/getHolidaysHmcList?serviceKey={my_key}&siDoCd={i}&siGunGuCd={j}'
+        url = f'http://apis.data.go.kr/openapi/service/rest/HmcSearchService/getHolidaysHmcList?serviceKey={my_key}&siDoCd={i}&siGunGuCd={j}'
+        re = requests.get(url)
+          
+        root = ET.fromstring(re.text)
+        e+=[tuple([r.tag , r.text]) for r in root.iter()]
+        
+
+# tag, value 분리
+e_tag=[]
+e_value=[]
+for i in e:
+    e_tag.append(i[0])
+    e_value.append(i[1])
+
+e_res = {key:[] for key in e_tag}  # creating a mesh of keys with empty values list 
+for key,val in zip(e_tag, e_value):  # loop to iterate through keys and values 
+    e_res[key].append(val)
+
+
+ho_dept= pd.DataFrame.from_dict(e_res, orient='index').T
+ho_dept.drop(ho_dept.columns[:7], axis=1, inplace = True)
+ho_dept.drop(ho_dept.columns[-3:], axis=1, inplace = True)
+ho_dept.columns=[['유방암검진담당','대장암검진코드','자궁경부암검진코드','X좌표값','Y좌표값','검진실팩스번호','검진실전화번호','일반검진담당','검진기관명','기관코드','기관전화번호','영유아검진코드','소재지주소','소재지우편번호','간암검진코드','구강검진코드','시도코드','시군구코드','위암검진코드','검진기관종별명']]
+    
+
+# 4. 검진기관통합조건검색(f)
+f=[]
+for i in sorted(set(refer['code'])):
+    for j in (refer[(refer['code']==i)]['sub_code']):# 110,140,170,200,215,230,260,290,305,320
+        # url = f'http://apis.data.go.kr/openapi/service/rest/HmcSearchService/getHolidaysHmcList?serviceKey={my_key}&siDoCd={i}&siGunGuCd={j}'
+        url = f'http://openapi1.nhis.or.kr/openapi/service/rest/HmcSearchService/getHmcList?&siDoCd={i}&siGunGuCd={j}&ServiceKey={my_key}'
+        re = requests.get(url)
+          
+        root = ET.fromstring(re.text)
+        f+=[tuple([r.tag , r.text]) for r in root.iter()]
+        
+
+# tag, value 분리
+f_tag=[]
+f_value=[]
+for i in f:
+    f_tag.append(i[0])
+    f_value.append(i[1])
+
+f_res = {s:[] for key in f_tag}  # creating a mesh of keys with empty values list 
+for key,val in zip(f_tag, f_value):  # loop to iterate through keys and values 
+    f_res[key].append(val)
+
+all_search = pd.DataFrame.from_dict(f_res, orient='index').T
+all_search.drop(all_search.columns[:7], axis=1, inplace = True)
+all_search.drop(all_search.columns[-3:], axis=1, inplace = True)
+all_search.columns=[['유방암검진담당','대장암검진코드','자궁경부암검진코드','X좌표값','Y좌표값','검진실팩스번호','검진실전화번호','일반검진담당','검진기관명','기관코드','기관전화번호','영유아검진코드','소재지주소','소재지우편번호','간암검진코드','구강검진코드','시도코드','시군구코드','위암검진코드','검진기관종별명']]
+
+import numpy as np
+diff1 = np.array(all_search.iloc[:,8].tolist()); diff2 = np.array(diag_dept.iloc[:,8].tolist())
+for i in np.setdiff1d(diff1, diff2):
+    print(i)
+
+## csv파일로 변환.
+loc_dept.to_csv('./기관찾기(지역별).csv',encoding='cp949')
+diag_dept.to_csv('./기관찾기(검진종류별).csv',encoding='cp949')
+ho_dept.to_csv('./기관찾기(휴일).csv',encoding='cp949')
