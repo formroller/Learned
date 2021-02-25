@@ -1,0 +1,46 @@
+import os 
+os.chdir('./kosis')
+
+import pandas as pd
+import numpy as np
+import re
+
+df = pd.read_csv('./kosis2.csv', encoding='cp949')
+
+# reindex
+indexs = np.arange(len(df))
+df = df.reindex(indexs)
+# column rename
+names = ['big','middle','small','title']
+df.columns = names
+
+# '년 split
+sp1 = df['title'].copy()
+sp1 = sp1.fillna('0')
+## date1)
+date = []
+for i in sp1:
+    if len(i.split('년')) <= 0:
+        date.append('0')
+    elif len(i.split('년'))>= 2:
+        date.append(i.split('년')[-1])
+    else:
+        date.append(i.split('년')[1:])
+##date2)
+date2=[]
+for i in date:
+    if i == []:
+        date2.append('')
+    else:
+        date2.append(i.lstrip())
+df['date'] = date2
+# df['big'] 공란 채우기
+df['big'] = df['big'].fillna(method = 'ffill')
+
+# df['middle'] = df['middle'].fillna(method = 'ffill')
+
+# df.to_csv('ko3.csv',encoding='cp949')
+
+df2 = pd.read_csv('ko3.csv', encoding = 'cp949')
+len(df2)
+
