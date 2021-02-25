@@ -1,0 +1,36 @@
+# =============================================================================
+# 업데이트 관리(중복처리)
+# =============================================================================
+
+import pandas as pd
+
+df = pd.read_csv('C:/Users/BIOJEAN/Desktop/이용준/test.csv',encoding='cp949',index_col=0)
+com = pd.read_csv('C:/Users/BIOJEAN/Desktop/이용준/working.csv',encoding='utf-8',index_col=0) # new data set
+## test
+# df(기존 데이터)에 com(새로운 데이터) 제목 비교.
+# 만약 데이터 있다면 대/중/소 분류, 태그 데이터 com에 치환.
+
+## df안에 com 값이 있는지 확인1
+df.loc['대분류',df['제목']==com['제목'][72]]
+df.loc[df['제목']==com['제목'][72]] # 일치하는 행 return
+df[df['제목']==com['제목'][72]].empty # 일치하지 않는 행 찾기
+
+## df안에 com 값이 있는지 확인2
+df[df['제목'].isin(com['제목'])]['대분류']
+com[com['제목'].isin(df['제목'])]['대분류']
+
+
+##
+for i in range(len(com)):
+    for j in range(len(df)):
+        if df['제목'][j] == com['제목'][i]:
+            com['지역'][i] = df['지역'][j]
+            com['하위지역'][i] = df['하위지역'][j]
+            com['부서'][i] = df['부서'][j]
+            com['하위부서'][i] = df['하위부서'][j]
+            com['대분류'][i] = df['대분류'][j]
+            com['중분류'][i] = df['중분류'][j]
+            com['소분류'][i] = df['소분류'][j]
+            com['태그'][i] = df['태그'][j]
+
+com.to_csv('C:/Users/BIOJEAN/Desktop/이용준/0115.csv',encoding='utf-8')
