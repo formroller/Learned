@@ -4,7 +4,7 @@ crwaling, preprocessing/Classiifcation, Visualization
 
 
 #1. Crwaling 
-
+===========================
  * 공공데이터 포털, 통계청 자료 수집
   + selenium, 자동 정보 수집
    ## pip, Selenium, Webdriver, xmlpath, selector, API
