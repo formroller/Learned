@@ -7,7 +7,7 @@ crwaling, preprocessing/Classiifcation, Visualization
 ===========================
  * 공공데이터 포털, 통계청 자료 수집
   + selenium, 자동 정보 수집
-   ## pip, Selenium, Webdriver, xmlpath, selector, API
+   + pip, Selenium, Webdriver, xmlpath, selector, API
     - explain
       가용한 파일을 확인하기 위해 공공데이터 포털의 리스트(파일명, 제공형태, 설명 등)를 긁어와야했다. BeautifulSoup을 활용해 데이터 크롤링 결과 원하던 데이터를 얻을 수 없었고,
      그 결과 찾은게 selenium이였다. Selenium은 요소에 대해 click, enter 등의 행위를 수행한다는 점이 BeautifulSoup와 차이점이였으며 그결과 데이터 파일 목록을 무사히 수집할 수 있었다.
