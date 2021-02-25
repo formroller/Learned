@@ -1,0 +1,17 @@
+from tabula import read_pdf
+import os
+os.chdir('')
+path = '.pdf'
+
+read_pdf(path,pages = 'all')
+
+tabula.convert_into(path, 'output2.csv', output_format = 'csv', pages=11)
+###
+import PyPDF2 as py
+
+PDF 읽는다. -> 표 추출한다 -> 데이터 프레임으로 저장한다. -> 엑셀 파일로 저장. -> sheet별로 저장
+
+# pip install git+https://github.com/pdftables/python-pdftables-api.git
+import pdftables_api
+c = pdftables_api.Client('')
+c.xlsx(path, '.xlsx')
