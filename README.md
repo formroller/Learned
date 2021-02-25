@@ -1,9 +1,9 @@
 # Learned (20.12 ~ 21.03 배운 점)
-crwaling, preprocessing/Classiifcation, Visualization
+crawling, preprocessing/Classiifcation, Visualization
 
 
 
-#1. Crwaling 
+#1. Crawling 
 ===========================
  * 공공데이터 포털, 통계청 자료 수집
   + selenium, 자동 정보 수집
