@@ -1,0 +1,156 @@
+import pandas as pd
+import numpy as np
+
+import re
+import csv
+
+public = pd.read_csv('C:/Users/BIOJEAN/medical/new_portal2.csv', encoding='utf-8-sig',index_col=0)
+# {'제목','제공기관','설명', '파일형태','제공형태','수정일'}
+
+public.columns = ['fname', 'provide','explain','type','date','form']
+
+public['sub_dept']='0'
+public['big']='0'
+public['middle']='0'
+public['small']='0'
+public['tag']='0'
+
+public['splits']= [i.split(' ')[0] for i in public['fname']]
+
+# 시/도 분리
+p=re.compile(r'.+[시|도]')
+p=re.compile(r'.+[$역시]|.+[$남도]|.+[$북도]')
+public['first']= public['splits'].str.findall(p).astype('str')
+
+public['first']= public['first'].str.replace('\'','')
+public['first']= public['first'].str.replace('[','')
+public['first'] = public['first'].str.replace(']','')
+public['first'].value_counts()
+
+#first 지역 외 제거
+public['first'].replace('한국보건의료인국가시','',inplace=True)
+public['first'].replace('보건의료인국가시','',inplace=True)
+public['first'].replace('소독의무시','',inplace=True)
+public['first'].replace('소독의무대상시','',inplace=True)
+public['first'].replace('정도','',inplace=True)
+public['first'].replace('2017년도','',inplace=True)
+public['first'].replace('안마시','',inplace=True)
+public['first'].replace('의료기기판매(임대)업(수시','',inplace=True)
+public['first'].replace('사회복지시','',inplace=True)
+
+# 시, 도 이름 통합
+public['first'].replace('서을특별시','서울특별시',inplace=True)
+public['first'].replace('부산시','부산광역시',inplace=True)
+public['first'].replace('인천시','인천광역시',inplace=True)
+public['first'].replace('대구','인천광역시',inplace=True)
+# public['fname'][2168] = public['fname'][2168].replace('대구','대구광역시')
+public['first'].replace('세종특별자치시시','세종특별자치시',inplace=True)
+
+# first -> location 컬럼명 변경
+public.rename(columns = {'first':'location'}, inplace=True)
+
+## step2) 시/군/구 추출
+
+public['split_2'] = [i.split(' ')[1:] for i in public['fname']]
+
+# 첫번째 split만 보관
+a=[]
+for i in public['split_2']:
+    if i == []:
+        a.append('')
+    else:
+        a.append(i[0])
+        
+print(a)
+
+# 시/군/구 통합
+b=[]
+for i in range(len(a)):
+    if a[i].endswith('시'):
+        b.append(a[i])
+    elif a[i].endswith('군'):
+        b.append(a[i])
+    elif a[i].endswith('구'):
+        b.append(a[i])
+    else:
+        b.append('')
+public['sub_loc'] = b
+
+# 변수명 확인
+public['sub_loc'].unique()
+
+public.sub_loc.replace('현금급여비(장애구','',inplace=True)
+public.sub_loc.replace('의료용구','',inplace=True)
+public.sub_loc.replace('구군','',inplace=True)
+public.sub_loc.replace('표본감시','',inplace=True)
+public.sub_loc.replace('보조기구','',inplace=True)
+public.sub_loc.replace('복지용구','',inplace=True)
+public.sub_loc.replace('수시','',inplace=True)
+
+## fname -> loc(info, detail)
+# fname - loc 기관명 추출
+second = [i.split(' ')[0] for i in public['fname']]
+
+loc_part = public['fname'].loc[public['location'] == second]
+a_2 = np.arange(len(public)+1)
+loc_part2 = pd.Series(loc_part, index=a_2)
+loc_part2.fillna('0',inplace=True)
+public.head(30)
+
+
+loc_detail =[]
+for i in range(len(public)):
+    if(len(loc_part2[i].split(' '))) <=2:
+        loc_detail.append('')
+    else:
+        loc_detail.append(loc_part2[i].split(' ')[2:])
+# public['loc_detail'] = loc_detail
+            
+## stpe3) 기관별로 분리
+## fname  - part
+# df['part'],기관명
+# df['info'],기관 하위 항목
+# df['detail'], 기관명 상세 설명
+# dept
+# de = public.index[public.location=='']
+# dept = public.fname[de]
+
+
+public['part'] = public['splits'].loc[public['location'] != second]
+public['part'].value_counts()
+
+# 기관명 있는 index만 선택해 split
+part2 = public['fname'].loc[public['location'] != second]
+a_1 = np.arange(len(public)+1)
+sub_part = pd.Series(part2, index = a_1)
+sub_part.fillna('0', inplace = True)
+len(sub_part)
+info = []
+len(public)
+for i in range(len(public)):
+    if(len(sub_part[i].split(' '))) <=2:
+        info.append('')
+    else:
+        info.append(sub_part[i].split(' ')[1])
+
+public.drop(['splits','split_2'], axis = 1, inplace = True)
+## 설명 컬럼 오타 및 내용 변경(설명-결괏/특수문자(‧),결핵요양시설(설명) - 정신건강--)
+public['explain'] = public['explain'].str.replace('결괏','결과')
+public['fname']=public['fname'].str.replace(pat=r'[‧]',repl=r'', regex=True)
+public['explain'] = public['explain'].str.replace(pat=r'[‧]',repl=r'', regex=True)
+for i in range(len(public)):
+    if public['fname'][i] == '결핵 요양시설 현황':
+        # public['explian'] = '경기도 내 결핵 요양 시설  현황입니다.'
+        public['explain'][i] = '경기도 내 결핵 요양 시설  현황입니다.'
+
+
+# 컬럼순서/ 컬럼명 변경
+public['form']
+
+public = public[['fname','provide','location','sub_loc','part','sub_dept','big','middle','small','tag','explain','type','form','date']]
+public.columns = ['제목', '제공기관','지역','하위지역','부서','하위부서','대분류','중분류','소분류','태그','설명','파일형태','수정일자','제공형태']
+
+public.to_csv('C:/Users/BIOJEAN/Desktop/이용준/working.csv', encoding='utf-8-sig')
+public.tail
+
+
